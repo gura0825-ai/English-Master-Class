@@ -1,32 +1,33 @@
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function LoginPage() {
+import { LoginForm } from "./login-form";
+
+const ERROR_MESSAGES: Record<string, string> = {
+  link: "로그인 링크가 만료되었거나 이미 사용되었어요. 새 링크를 받아 주세요.",
+};
+
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string; error?: string }>;
+}) {
+  const { next, error } = await searchParams;
+  const errorMessage = error ? (ERROR_MESSAGES[error] ?? "로그인에 실패했어요. 다시 시도해 주세요.") : null;
+
   return (
     <main className="flex min-h-dvh items-center justify-center px-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-xl text-primary">English Master Class</CardTitle>
-          <CardDescription>이메일로 로그인 링크를 보내드려요. (2단계에서 연결 예정)</CardDescription>
+          <CardDescription>비밀번호 없이, 이메일로 받은 링크를 눌러 로그인해요.</CardDescription>
         </CardHeader>
-        <CardContent>
-          <form className="flex flex-col gap-3">
-            <label htmlFor="email" className="text-sm font-medium">
-              이메일
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="you@example.com"
-              autoComplete="email"
-              disabled
-              className="h-12 rounded-lg border border-input bg-background px-3 text-base outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-60"
-            />
-            <Button type="submit" disabled>
-              로그인 링크 받기
-            </Button>
-          </form>
+        <CardContent className="flex flex-col gap-4">
+          {errorMessage && (
+            <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {errorMessage}
+            </p>
+          )}
+          <LoginForm next={next} />
         </CardContent>
       </Card>
     </main>
