@@ -18,6 +18,9 @@
   - cards→notes, reviews→cards 는 (id, user_id) 복합 FK (남의 노트에 카드 못 붙임)
   - profiles 는 timezone/email_enabled/send_hour/daily_limit 컬럼만 수정 가능
   - cards.next_review_date 기본값 = 내일(KST), notes.study_date 기본값 = 오늘(KST)
+- `supabase/migrations/20261124000000_grants.sql` — 테이블 GRANT 명시 (3단계 중 추가)
+  - 최근 Supabase 프로젝트는 새 테이블 권한을 자동으로 주지 않아 42501 permission denied 발생 → 추가
+  - 로컬 검증용 스텁도 자동 권한(default privileges) 없이 테스트해야 실제와 같음
 - `lib/supabase/{server,client,middleware,env}.ts`, 루트 `middleware.ts`
   - 공개 경로: `/login`, `/auth/*`, `/r/*`, `/api/cron/*` (나머지는 미로그인 시 `/login?next=…`)
 - `/login` (Server Action `app/login/actions.ts` + zod), `/auth/callback`(token_hash·code 둘 다), `/auth/signout`(POST)
@@ -38,6 +41,8 @@
   - 노트+카드 저장은 트랜잭션이 아님: 카드 저장 실패 시 노트를 지워 되돌림
 - 메모는 react-markdown 으로 표시 (HTML 태그는 글자로)
 - vitest 설정(`vitest.config.mts`, `npm test`): dates·srs·quick-parse·validation·search 21개 테스트
+- DB 오류 로그는 `lib/supabase/errors.ts`의 describeDbError 사용 (PostgrestError 가 '{}'로 찍히는 문제)
+- 노트 목록 카드 수는 cards(count) embed 대신 노트별 head count
 - `lib/dates.ts`: todayInSeoul, addDaysToDateString, formatDateKo, relativeDayKo
 
 ## Supabase 설정 상태
