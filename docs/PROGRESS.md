@@ -45,7 +45,7 @@
 - 노트 목록 카드 수는 cards(count) embed 대신 노트별 head count
 - `lib/dates.ts`: todayInSeoul, addDaysToDateString, formatDateKo, relativeDayKo
 
-### 4단계 — 복습 (2026-11-24, 사용자 PC 확인 대기)
+### 4단계 — 복습 (2026-11-24, 사용자 PC에서 복습·홈·연속 학습일 확인 완료)
 - `lib/srs.ts`: schedule(stage, rating), applyReview(card, rating, today) + 테스트(설계서 6장 1→4→11→25→55→115일 시나리오 포함)
 - `/review`: 오늘 볼 카드(next_review_date <= 오늘, 오래된 순, profiles.daily_limit 장) 플래시카드
   - 탭/Space 로 뒤집기, [모름][헷갈림][기억남](키 1·2·3), 버튼에 다음 복습일 미리보기, 진행률, 종료 화면
