@@ -1,11 +1,26 @@
-import { PagePlaceholder } from "@/components/page-placeholder";
+import { createNote } from "@/app/(main)/notes/actions";
+import { NoteForm } from "@/components/notes/note-form";
+import { todayInSeoul } from "@/lib/dates";
+
+export const dynamic = "force-dynamic"; // 날짜 기본값(오늘)을 요청마다 계산
 
 export default function NewNotePage() {
   return (
-    <PagePlaceholder
-      title="노트 작성"
-      stage="3단계"
-      description="날짜(기본 오늘)·제목·출처·태그·메모와 카드 입력줄(표현/뜻/예문), [한꺼번에 붙여넣기]가 들어가요."
-    />
+    <section className="flex flex-col gap-4">
+      <h1 className="text-2xl font-bold">노트 작성</h1>
+      <NoteForm
+        action={createNote}
+        submitLabel="저장"
+        cancelHref="/notes"
+        initialValues={{
+          study_date: todayInSeoul(),
+          title: "",
+          source: "",
+          tags: "",
+          memo: "",
+          cards: [],
+        }}
+      />
+    </section>
   );
 }
