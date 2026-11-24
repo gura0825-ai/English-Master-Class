@@ -45,6 +45,21 @@
 - 노트 목록 카드 수는 cards(count) embed 대신 노트별 head count
 - `lib/dates.ts`: todayInSeoul, addDaysToDateString, formatDateKo, relativeDayKo
 
+### 4단계 — 복습 (2026-11-24, 사용자 PC 확인 대기)
+- `lib/srs.ts`: schedule(stage, rating), applyReview(card, rating, today) + 테스트(설계서 6장 1→4→11→25→55→115일 시나리오 포함)
+- `/review`: 오늘 볼 카드(next_review_date <= 오늘, 오래된 순, profiles.daily_limit 장) 플래시카드
+  - 탭/Space 로 뒤집기, [모름][헷갈림][기억남](키 1·2·3), 버튼에 다음 복습일 미리보기, 진행률, 종료 화면
+  - 평가 즉시 다음 카드로 넘기고 저장은 뒤에서. 실패하면 한 번만 맨 뒤로 다시, 두 번째 실패는 건너뜀
+  - 카드 목록은 처음 받은 것을 고정(서버 데이터가 바뀌어도 순서 유지), 액션에서 revalidatePath 안 함
+- Server Action `app/(main)/review/actions.ts` submitReview: cards 갱신 + reviews(via web) 기록
+  - next_review_date > 오늘이면 이미 평가한 것으로 보고 무시, update 는 stage·next_review_date 가 그대로일 때만(동시 평가 방지)
+  - cards 갱신과 reviews 기록은 트랜잭션 아님 (이력 insert 실패 시 로그만)
+- `lib/review/queries.ts`: getDailyLimit, getDueCards, countDueCards, getNextReview, getStudyStreak
+- 홈(/): 오늘 볼 카드 수(밀린 카드 안내), 다음 복습일, 연속 학습일, 최근 노트 5개
+- `supabase/migrations/20261124010000_study_days.sql`: study_days(p_since) 함수(security invoker)
+  — 복습한 날(KST) + 노트 study_date. 연속 학습일 계산은 `lib/review/streak.ts`. 함수가 없으면 홈에서 숨김
+- 테스트 34개
+
 ## Supabase 설정 상태
 - URL Configuration: Site URL `http://localhost:3000`, Redirect `http://localhost:3000/auth/callback` 설정 완료
 - 메일 템플릿: 아직 기본값. Supabase가 커스텀 SMTP 없이는 템플릿 수정을 막음
@@ -65,8 +80,9 @@
 - 로그인이 필요한 화면은 여기서 열 수 없음 → 폼은 임시 공개 페이지로 화면·검증만 확인하고 삭제,
   실제 저장·목록·검색은 사용자 PC에서 확인 (PostgREST 바이너리 다운로드는 권한상 차단됨)
 
-## 다음: 4단계 — 복습
-"lib/srs.ts를 CLAUDE.md의 SRS 규칙대로 만들고 vitest 테스트를 작성해줘. /review에 오늘 볼 카드를
-플래시카드로 보여주고 [모름][헷갈림][기억남]을 누르면 cards를 갱신하고 reviews에 기록해줘.
-홈(/)에 오늘 볼 카드 수와 최근 노트를 보여줘."
-- lib/srs.ts 에는 이미 INTERVALS, MAX_STAGE, newCardSchedule 이 있음 → schedule(stage, rating) 추가
+## 다음: 5단계 — 메일
+"Resend + React Email로 emails/DailyReview.tsx 템플릿을 만들고, /api/cron/daily-review 라우트와
+vercel.json cron을 CLAUDE.md Email 절대로 구현해줘. /r/[token] 평가 페이지와 /settings도 만들어줘.
+로컬에서 curl로 cron을 호출해 내 메일로 테스트하는 방법도 알려줘."
+- 메일 평가(/r/[token])도 lib/srs.ts 의 applyReview 를 써야 함 (via 'email', service role)
+- 준비물: Resend 가입·API key. Supabase 메일 템플릿 변경은 Resend SMTP 연결 후 (위 'Supabase 설정 상태')

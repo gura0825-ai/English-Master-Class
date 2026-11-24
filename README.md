@@ -22,11 +22,18 @@ npm run dev                  # http://localhost:3000
 | `/review` | 오늘의 복습 |
 | `/settings` | 설정 |
 
+## 테스트
+
+```bash
+npm test
+```
+
 ## Supabase 설정 (2단계)
 
 1. **테이블 만들기**: Supabase 대시보드 → SQL Editor → New query에 아래 파일을 **순서대로** 하나씩 붙여넣고 **Run**.
    1. `supabase/migrations/20261123000000_init.sql` (한 번만)
    2. `supabase/migrations/20261124000000_grants.sql` (테이블 권한. 여러 번 실행해도 안전)
+   3. `supabase/migrations/20261124010000_study_days.sql` (홈의 연속 학습일. 여러 번 실행해도 안전)
 2. **키 넣기**: Project Settings → API Keys에서 값을 복사해 `.env.local`에 입력
    - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`(anon/publishable), `SUPABASE_SERVICE_ROLE_KEY`(service_role/secret)
 3. **리다이렉트 주소 허용**: Authentication → URL Configuration
