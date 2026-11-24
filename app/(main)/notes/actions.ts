@@ -7,6 +7,7 @@ import { z } from "zod";
 import { todayInSeoul } from "@/lib/dates";
 import { validateNoteInput, type ValidCard } from "@/lib/notes/validation";
 import { newCardSchedule } from "@/lib/srs";
+import { describeDbError } from "@/lib/supabase/errors";
 import { createClient } from "@/lib/supabase/server";
 
 export type NoteFormState =
@@ -65,7 +66,7 @@ export async function createNote(_prev: NoteFormState, formData: FormData): Prom
     .select("id")
     .single();
   if (noteError || !note) {
-    console.error("[createNote] note insert:", noteError);
+    console.error("[createNote] note insert:", describeDbError(noteError));
     return { status: "error", message: SAVE_FAILED, fieldErrors: {} };
   }
 
@@ -74,7 +75,7 @@ export async function createNote(_prev: NoteFormState, formData: FormData): Prom
       .from("cards")
       .insert(newCardRows(input.cards, note.id, user.id));
     if (cardsError) {
-      console.error("[createNote] cards insert:", cardsError);
+      console.error("[createNote] cards insert:", describeDbError(cardsError));
       // 카드 저장이 실패하면 반쪽 노트가 남지 않게 지운다
       await supabase.from("notes").delete().eq("id", note.id);
       return { status: "error", message: SAVE_FAILED, fieldErrors: {} };
@@ -106,7 +107,7 @@ export async function updateNote(
     .eq("id", noteId)
     .select("id");
   if (noteError) {
-    console.error("[updateNote] note update:", noteError);
+    console.error("[updateNote] note update:", describeDbError(noteError));
     return { status: "error", message: SAVE_FAILED, fieldErrors: {} };
   }
   if (!updated?.length) {
@@ -118,7 +119,7 @@ export async function updateNote(
     .select("id")
     .eq("note_id", noteId);
   if (existingError) {
-    console.error("[updateNote] cards select:", existingError);
+    console.error("[updateNote] cards select:", describeDbError(existingError));
     return { status: "error", message: SAVE_FAILED, fieldErrors: {} };
   }
 
@@ -132,7 +133,7 @@ export async function updateNote(
   if (removedIds.length > 0) {
     const { error } = await supabase.from("cards").delete().eq("note_id", noteId).in("id", removedIds);
     if (error) {
-      console.error("[updateNote] cards delete:", error);
+      console.error("[updateNote] cards delete:", describeDbError(error));
       return { status: "error", message: SAVE_FAILED, fieldErrors: {} };
     }
   }
@@ -155,14 +156,14 @@ export async function updateNote(
   );
   const updateError = updateResults.find((r) => r.error)?.error;
   if (updateError) {
-    console.error("[updateNote] cards update:", updateError);
+    console.error("[updateNote] cards update:", describeDbError(updateError));
     return { status: "error", message: SAVE_FAILED, fieldErrors: {} };
   }
 
   if (newCards.length > 0) {
     const { error } = await supabase.from("cards").insert(newCardRows(newCards, noteId, user.id));
     if (error) {
-      console.error("[updateNote] cards insert:", error);
+      console.error("[updateNote] cards insert:", describeDbError(error));
       return { status: "error", message: SAVE_FAILED, fieldErrors: {} };
     }
   }
@@ -180,7 +181,7 @@ export async function deleteNote(noteId: string): Promise<void> {
   // 카드·복습 이력은 on delete cascade 로 함께 삭제
   const { error } = await supabase.from("notes").delete().eq("id", noteId);
   if (error) {
-    console.error("[deleteNote]", error);
+    console.error("[deleteNote]", describeDbError(error));
     throw new Error("노트를 삭제하지 못했어요.");
   }
 

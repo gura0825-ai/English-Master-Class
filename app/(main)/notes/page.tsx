@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatDateKo, todayInSeoul } from "@/lib/dates";
 import { sanitizeSearchTerm } from "@/lib/notes/search";
+import { describeDbError } from "@/lib/supabase/errors";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +18,6 @@ type NoteListRow = {
   study_date: string;
   source: string | null;
   tags: string[];
-  cards: { count: number }[];
 };
 
 function notesHref(params: { q?: string; tag?: string; page?: number }) {
@@ -52,7 +52,7 @@ export default async function NotesPage({
 
   let query = supabase
     .from("notes")
-    .select("id, title, study_date, source, tags, cards(count)", { count: "exact" })
+    .select("id, title, study_date, source, tags", { count: "exact" })
     .order("study_date", { ascending: false })
     .order("created_at", { ascending: false })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
@@ -74,8 +74,16 @@ export default async function NotesPage({
   }
 
   const { data, count, error } = await query.returns<NoteListRow[]>();
-  if (error) console.error("[notes] list:", error);
+  if (error) console.error("[notes] list:", describeDbError(error));
   const notes = data ?? [];
+
+  // 노트별 카드 수 (embed count 는 서버 설정에 따라 막힐 수 있어 노트마다 개수만 센다)
+  const countResults = await Promise.all(
+    notes.map((n) =>
+      supabase.from("cards").select("id", { count: "exact", head: true }).eq("note_id", n.id)
+    )
+  );
+  const cardCounts = new Map(notes.map((n, i) => [n.id, countResults[i].count ?? 0]));
   const total = count ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const today = todayInSeoul();
@@ -152,6 +160,9 @@ export default async function NotesPage({
       {error ? (
         <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
           노트를 불러오지 못했어요. 새로고침해 주세요.
+          {process.env.NODE_ENV === "development" && (
+            <span className="mt-1 block font-mono text-xs break-all">{describeDbError(error)}</span>
+          )}
         </p>
       ) : notes.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed p-8 text-center">
@@ -167,7 +178,7 @@ export default async function NotesPage({
       ) : (
         <ul className="flex flex-col gap-2">
           {notes.map((note) => {
-            const cardCount = note.cards?.[0]?.count ?? 0;
+            const cardCount = cardCounts.get(note.id) ?? 0;
             return (
               <li key={note.id}>
                 <Link
