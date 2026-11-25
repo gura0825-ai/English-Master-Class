@@ -22,6 +22,10 @@ npm run dev                  # http://localhost:3000
 | `/review` | 오늘의 복습 |
 | `/settings` | 설정 |
 
+## 배포
+
+Vercel 배포 절차와 점검 목록은 [docs/DEPLOY.md](docs/DEPLOY.md) 참고.
+
 ## 테스트
 
 ```bash

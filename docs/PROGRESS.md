@@ -99,9 +99,9 @@
 - 로그인이 필요한 화면은 여기서 열 수 없음 → 폼은 임시 공개 페이지로 화면·검증만 확인하고 삭제,
   실제 저장·목록·검색은 사용자 PC에서 확인 (PostgREST 바이너리 다운로드는 권한상 차단됨)
 
-## 다음: 6단계 — 배포
-"GitHub에 올리고 Vercel에 배포하는 절차를 알려줘. 입력할 환경변수 목록, Supabase Auth의 Site URL·Redirect URL 설정,
-배포 후 점검 목록을 정리해줘."
-- 환경변수 8개(.env.example), NEXT_PUBLIC_APP_URL = 배포 주소
-- Supabase URL Configuration 에 배포 주소와 /auth/callback 추가
-- Vercel Hobby cron 은 하루 1회, 지정 시각의 1시간 안 임의 시점
+## 진행 중: 6단계 — 배포 (2026-11-25)
+- 배포 절차·환경변수·Supabase 설정·점검 목록: `docs/DEPLOY.md`
+- 배포 주소, 점검 결과는 확인되는 대로 여기에 기록
+
+## 다음: 7단계 — 다듬기
+"코드 전체를 검토해서 보안(RLS·토큰), 날짜/시간대 버그, 모바일 화면 문제를 찾아 고쳐줘."
