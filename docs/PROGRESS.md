@@ -99,9 +99,24 @@
 - 로그인이 필요한 화면은 여기서 열 수 없음 → 폼은 임시 공개 페이지로 화면·검증만 확인하고 삭제,
   실제 저장·목록·검색은 사용자 PC에서 확인 (PostgREST 바이너리 다운로드는 권한상 차단됨)
 
-## 진행 중: 6단계 — 배포 (2026-11-25)
+## 진행 중: 6단계 — 배포 (2026-11-25 시작)
 - 배포 절차·환경변수·Supabase 설정·점검 목록: `docs/DEPLOY.md`
-- 배포 주소, 점검 결과는 확인되는 대로 여기에 기록
+- **배포 주소: https://english-master-class-theta.vercel.app** (Vercel Hobby, GitHub main 자동 배포)
+  - 비슷한 이름의 남의 사이트(english-master-theta…)가 있으니 주소의 `-class` 확인
+- 완료
+  - Vercel 환경변수 8개 입력. `NEXT_PUBLIC_*` 3개는 Type **Config** 로 다시 만듦
+    (Vercel 이 NEXT_PUBLIC_ 변수를 Secret 으로 저장하지 못하게 막음. Secret→Config 변경 불가라 삭제 후 재생성)
+  - NEXT_PUBLIC_APP_URL = 배포 주소, Redeploy 완료 → 배포 주소에서 로그인 화면 확인
+  - Supabase URL Configuration: Site URL = 배포 주소, Redirect URLs = localhost·배포 주소 /auth/callback 두 개
+- 남은 일 (2026-11-26 예정)
+  1. **폰 로그인**: 지금은 기본 템플릿(PKCE)이라 링크를 요청한 브라우저에서만 로그인됨
+     → Gmail 앱 내부 브라우저에서 열면 "로그인 링크가 만료되었거나…" 발생 (확인됨)
+     → 해결: Supabase SMTP 를 Resend 로 연결(smtp.resend.com:465, user resend, pw API key, sender onboarding@resend.dev)
+       후 Magic Link 템플릿 링크를 `{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email` 로 변경 (코드는 이미 지원)
+     → 임시: 링크를 복사해 요청한 브라우저 주소창에 붙여넣기
+  2. 폰에서 노트·복습·설정 화면, [지금 테스트 메일 받기] 버튼 링크가 배포 주소(/r/…)로 열리는지
+  3. Vercel → Settings → Cron Jobs 에 /api/cron/daily-review (0 22 * * *) 등록 확인
+  4. 다음 날 07:00~07:59 자동 메일 도착 (카드 있을 때만). 안 오면 Vercel Logs 에서 daily-review 확인
 
 ## 다음: 7단계 — 다듬기
 "코드 전체를 검토해서 보안(RLS·토큰), 날짜/시간대 버그, 모바일 화면 문제를 찾아 고쳐줘."
