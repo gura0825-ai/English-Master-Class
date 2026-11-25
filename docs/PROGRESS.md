@@ -60,7 +60,7 @@
   — 복습한 날(KST) + 노트 study_date. 연속 학습일 계산은 `lib/review/streak.ts`. 함수가 없으면 홈에서 숨김
 - 테스트 34개
 
-### 5단계 — 메일 (2026-11-25, 사용자 PC 확인 대기)
+### 5단계 — 메일 (2026-11-25, 사용자 PC에서 테스트 메일·메일 평가·cron 호출 확인 완료)
 - `emails/DailyReview.tsx`(React Email) + `lib/email/daily-review.ts`(제목·라벨·렌더) + `lib/email/send.ts`(Resend)
   - 제목 `[English Master Class] 오늘의 복습 N개 · 11월 25일`, 카드별 "첫 복습 · 1일 만에"/"3번째 · 7일 만에"
   - 버튼 하나(/r/[token]) + 설정 링크, plain text 버전 포함, viewport meta
