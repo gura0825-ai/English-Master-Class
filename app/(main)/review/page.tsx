@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CalendarCheck } from "lucide-react";
 
+import { submitReview } from "@/app/(main)/review/actions";
 import { ReviewSession } from "@/components/review/review-session";
 import { Button } from "@/components/ui/button";
 import { formatDateKo, relativeDayKo, todayInSeoul } from "@/lib/dates";
@@ -47,7 +48,7 @@ export default async function ReviewPage() {
           </p>
         )}
       </div>
-      <ReviewSession cards={cards} today={today} />
+      <ReviewSession cards={cards} today={today} submit={submitReview} />
     </section>
   );
 }

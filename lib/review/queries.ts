@@ -24,25 +24,36 @@ export type DueCard = {
   note_title: string | null;
 };
 
-/** 설정의 하루 최대 카드 수 */
-export async function getDailyLimit(supabase: SupabaseClient): Promise<number> {
-  const { data, error } = await supabase.from("profiles").select("daily_limit").maybeSingle();
+/**
+ * 설정의 하루 최대 카드 수.
+ * userId 는 service role(RLS 없음)로 부를 때 반드시 넘긴다.
+ */
+export async function getDailyLimit(supabase: SupabaseClient, userId?: string): Promise<number> {
+  let query = supabase.from("profiles").select("daily_limit");
+  if (userId) query = query.eq("id", userId);
+  const { data, error } = await query.maybeSingle();
   if (error) console.error("[review] daily_limit:", describeDbError(error));
   return data?.daily_limit ?? DEFAULT_DAILY_LIMIT;
 }
 
-/** 오늘 볼 카드: next_review_date <= 오늘, 오래된 순, limit 장 */
+/**
+ * 볼 카드: next_review_date <= dueBy(보통 오늘), 오래된 순, limit 장.
+ * userId 는 service role(RLS 없음)로 부를 때 반드시 넘긴다.
+ */
 export async function getDueCards(
   supabase: SupabaseClient,
-  today: string,
-  limit: number
+  dueBy: string,
+  limit: number,
+  userId?: string
 ): Promise<DueCard[]> {
-  const { data, error } = await supabase
+  let query = supabase
     .from("cards")
     .select(
       "id, note_id, expression, meaning, example, my_note, type, stage, review_count, next_review_date, notes(title)"
     )
-    .lte("next_review_date", today)
+    .lte("next_review_date", dueBy);
+  if (userId) query = query.eq("user_id", userId);
+  const { data, error } = await query
     .order("next_review_date", { ascending: true })
     .order("created_at", { ascending: true })
     .limit(limit);

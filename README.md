@@ -48,3 +48,32 @@ npm test
    혼자 쓰는 앱이라 다른 사람이 가입하지 못하게 한다.
 
 > Supabase 기본 메일 발송은 시간당 몇 통으로 제한된다. 로그인 링크를 연달아 요청하면 "너무 자주 요청" 안내가 나온다.
+
+## 복습 메일 설정 (5단계)
+
+1. **Resend 가입** → API Keys → Create API Key(Sending access) → `.env.local`의 `RESEND_API_KEY`
+2. `.env.local`에 `CRON_SECRET`, `REVIEW_TOKEN_SECRET`(각각 다른 임의 문자열), `NEXT_PUBLIC_APP_URL` 입력
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+   ```
+3. `npm run dev` 재시작 → **설정 → [지금 테스트 메일 받기]** 로 바로 확인
+4. 자동 발송 경로(cron)를 직접 호출해 보기 (Windows PowerShell은 `curl.exe`)
+   ```bash
+   curl.exe -H "Authorization: Bearer 여기에_CRON_SECRET" http://localhost:3000/api/cron/daily-review
+   ```
+   - 결과 `"sent":1` → 메일 발송 + `email_logs`에 기록. 같은 날 다시 호출하면 `already_sent`로 건너뜀
+   - `"no_cards"` → 오늘 복습할 카드가 없음 (카드가 있을 때만 보냄)
+   - 다시 보내 보려면 SQL Editor에서 `delete from public.email_logs where sent_date = (now() at time zone 'Asia/Seoul')::date;`
+5. 배포 후에는 `vercel.json`의 cron(`0 22 * * *` = 매일 07시대 KST)이 자동으로 호출한다.
+   Vercel 환경변수에 `CRON_SECRET`이 있으면 Vercel이 인증 헤더를 붙여 준다.
+
+메일의 [웹에서 플래시카드로 복습하기] 버튼은 `/r/[token]`을 연다. 로그인 없이 그날 카드만 평가할 수 있고
+(평가는 버튼 = POST로만 저장), 링크는 보낸 날부터 3일 동안 유효하다.
+
+### (선택) 로그인 메일도 Resend로 보내기
+Supabase → Authentication → Emails → **SMTP Settings**: Host `smtp.resend.com`, Port `465`,
+Username `resend`, Password = Resend API key, Sender = `onboarding@resend.dev`.
+연결하면 Magic Link 템플릿을 고칠 수 있다 → 링크를 아래로 바꾸면 폰 메일 앱에서도 로그인된다.
+```html
+<a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email">로그인하기</a>
+```

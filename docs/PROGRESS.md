@@ -60,6 +60,25 @@
   — 복습한 날(KST) + 노트 study_date. 연속 학습일 계산은 `lib/review/streak.ts`. 함수가 없으면 홈에서 숨김
 - 테스트 34개
 
+### 5단계 — 메일 (2026-11-25, 사용자 PC 확인 대기)
+- `emails/DailyReview.tsx`(React Email) + `lib/email/daily-review.ts`(제목·라벨·렌더) + `lib/email/send.ts`(Resend)
+  - 제목 `[English Master Class] 오늘의 복습 N개 · 11월 25일`, 카드별 "첫 복습 · 1일 만에"/"3번째 · 7일 만에"
+  - 버튼 하나(/r/[token]) + 설정 링크, plain text 버전 포함, viewport meta
+- `/api/cron/daily-review` + `lib/cron/daily-review.ts`, `vercel.json` cron `0 22 * * *`
+  - Bearer CRON_SECRET(timingSafeEqual), email_enabled 사용자 → 오늘 'sent' 기록 있으면 건너뜀
+  - 볼 카드 없으면 보내지도 기록하지도 않음, Resend idempotencyKey `daily-review/{user}/{date}`
+  - email_logs upsert(onConflict user_id,sent_date): 실패도 기록, 같은 날 재실행 시 실패분만 재시도
+- `/r/[token]`(로그인 불필요, (main) 밖): `lib/review/token.ts` HMAC(`review:{user}:{date}`), 보낸 날 포함 3일
+  - 카드 = 토큰 주인의 next_review_date <= 메일 날짜, daily_limit 장 (service role + user_id 직접 필터)
+  - 평가는 Server Action(POST) `submitEmailReview`만, via 'email'. GET 은 보여주기만
+  - noindex, referrer no-referrer(토큰이 외부 Referer 로 새지 않게)
+- `lib/review/record.ts` recordReview: 웹·메일 공통 저장(dueBy 이후로 밀린 카드는 무시, 동시 평가 방지)
+  - ReviewSession 은 submit 함수를 prop 으로 받음
+- `lib/supabase/admin.ts`(service role, server-only), `lib/env.ts`(requireEnv, getAppUrl)
+- `/settings`: 메일 켜기/끄기, 하루 최대 카드 수(1~200), [지금 테스트 메일 받기](RLS 사용자 권한, 기록 안 남김), 최근 발송 기록 7개
+- `components/page-placeholder.tsx` 삭제 (모든 화면 구현 완료)
+- vitest: JSX 변환을 위해 vitest.config.mts 에 oxc jsx automatic. 테스트 46개
+
 ## Supabase 설정 상태
 - URL Configuration: Site URL `http://localhost:3000`, Redirect `http://localhost:3000/auth/callback` 설정 완료
 - 메일 템플릿: 아직 기본값. Supabase가 커스텀 SMTP 없이는 템플릿 수정을 막음
@@ -80,9 +99,9 @@
 - 로그인이 필요한 화면은 여기서 열 수 없음 → 폼은 임시 공개 페이지로 화면·검증만 확인하고 삭제,
   실제 저장·목록·검색은 사용자 PC에서 확인 (PostgREST 바이너리 다운로드는 권한상 차단됨)
 
-## 다음: 5단계 — 메일
-"Resend + React Email로 emails/DailyReview.tsx 템플릿을 만들고, /api/cron/daily-review 라우트와
-vercel.json cron을 CLAUDE.md Email 절대로 구현해줘. /r/[token] 평가 페이지와 /settings도 만들어줘.
-로컬에서 curl로 cron을 호출해 내 메일로 테스트하는 방법도 알려줘."
-- 메일 평가(/r/[token])도 lib/srs.ts 의 applyReview 를 써야 함 (via 'email', service role)
-- 준비물: Resend 가입·API key. Supabase 메일 템플릿 변경은 Resend SMTP 연결 후 (위 'Supabase 설정 상태')
+## 다음: 6단계 — 배포
+"GitHub에 올리고 Vercel에 배포하는 절차를 알려줘. 입력할 환경변수 목록, Supabase Auth의 Site URL·Redirect URL 설정,
+배포 후 점검 목록을 정리해줘."
+- 환경변수 8개(.env.example), NEXT_PUBLIC_APP_URL = 배포 주소
+- Supabase URL Configuration 에 배포 주소와 /auth/callback 추가
+- Vercel Hobby cron 은 하루 1회, 지정 시각의 1시간 안 임의 시점

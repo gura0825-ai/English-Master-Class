@@ -4,12 +4,12 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { PartyPopper } from "lucide-react";
 
-import { submitReview } from "@/app/(main)/review/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { relativeDayKo } from "@/lib/dates";
 import { CARD_TYPE_LABELS } from "@/lib/notes/constants";
 import type { DueCard } from "@/lib/review/queries";
+import type { ReviewResult } from "@/lib/review/record";
 import { applyReview, MAX_STAGE, type Rating } from "@/lib/srs";
 import { cn } from "@/lib/utils";
 
@@ -31,7 +31,22 @@ const RATING_BUTTONS: { rating: Rating; label: string; key: string; className: s
 
 type Tally = Record<Rating, number>;
 
-export function ReviewSession({ cards: initialCards, today }: { cards: DueCard[]; today: string }) {
+type ReviewSessionProps = {
+  cards: DueCard[];
+  today: string;
+  /** 평가 저장 Server Action (웹: submitReview, 메일: 토큰이 묶인 submitEmailReview) */
+  submit: (cardId: string, rating: Rating) => Promise<ReviewResult>;
+  doneHref?: string;
+  doneLabel?: string;
+};
+
+export function ReviewSession({
+  cards: initialCards,
+  today,
+  submit,
+  doneHref = "/",
+  doneLabel = "홈으로",
+}: ReviewSessionProps) {
   // 처음 받은 목록을 고정해 둔다 (저장 후 서버 데이터가 바뀌어도 진행 순서가 흔들리지 않게)
   const [queue, setQueue] = useState(initialCards);
   const [index, setIndex] = useState(0);
@@ -54,7 +69,7 @@ export function ReviewSession({ cards: initialCards, today }: { cards: DueCard[]
       setRevealed(false);
       startTransition(async () => {
         try {
-          const result = await submitReview(current.id, rating);
+          const result = await submit(current.id, rating);
           if (!result.ok) throw new Error(result.message);
         } catch {
           setTally((t) => ({ ...t, [rating]: t[rating] - 1 }));
@@ -70,7 +85,7 @@ export function ReviewSession({ cards: initialCards, today }: { cards: DueCard[]
         }
       });
     },
-    [card, revealed]
+    [card, revealed, submit]
   );
 
   // 키보드: Space/Enter 뒤집기, 1 모름 · 2 헷갈림 · 3 기억남
@@ -110,7 +125,7 @@ export function ReviewSession({ cards: initialCards, today }: { cards: DueCard[]
         </dl>
         {failed && <p className="text-sm text-destructive">{failed}</p>}
         <Button asChild className="w-full max-w-xs">
-          <Link href="/">홈으로</Link>
+          <Link href={doneHref}>{doneLabel}</Link>
         </Button>
       </div>
     );
